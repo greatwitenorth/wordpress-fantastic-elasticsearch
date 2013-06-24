@@ -38,7 +38,17 @@ class Searcher{
 			if($search){
 				$score = Api::score('field', $field);
 
-				if($score > 0){
+				if($field == 'post_date'){
+					$shoulds[] = array('range' => array($field => array(
+							'boost' => 15,
+							'gte' => date('Y-m-d H:m:s')
+					)));
+
+					$shoulds[] = array('range' => array($field => array(
+							'boost' => 5,
+							'lte' => date('Y-m-d H:m:s', strtotime("-7 days"))
+					)));
+				}else if($score > 0){
 					$shoulds[] = array('text' => array($field => array(
 						'query' => $search,
 						'boost' => $score
@@ -56,15 +66,20 @@ class Searcher{
 		}
 
 		if(count($shoulds) > 0){
-			$args['query']['bool']['should'] = $shoulds;
+			$args['query']['custom_filters_score']['query']['bool']['should'] = $shoulds;
 		}
 
 		if(count($filters) > 0){
 			$args['filter']['bool']['should'] = $filters;
 		}
 
+		$date_score = Api::score('field', 'post_date') * 0.05;
+		$args['query']['custom_filters_score']['filters'][0]['filter'] =  array('exists' => array('field' => 'post_date'));
+		$args['query']['custom_filters_score']['filters'][0]['script'] = "($date_score / ((3.16*pow(10,-11)) * abs(now - doc[\"post_date\"].date.getMillis()) + 0.05)) + 1.0";
+		$args['query']['custom_filters_score']['params'] = array( 'now' => time()*1000);
+
 		if(count($musts) > 0){
-			$args['query']['bool']['must'] = $musts;
+			$args['query']['custom_filters_score']['query']['bool']['must'] = $musts;
 		}
 
 		foreach(Api::facets() as $facet){
