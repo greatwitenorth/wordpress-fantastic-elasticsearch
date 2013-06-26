@@ -14,10 +14,8 @@ foreach(Api::fields() as $field){
 	$fields['numeric']['options'][$field] = $field;
 }
 
-$numeric_option = Api::option('numeric');
-
-if ($numeric_option) {
-	foreach(array_keys($numeric_option) as $numeric){
+if(Api::option('numeric')){
+	foreach(array_keys(Api::option('numeric')) as $numeric){
 		$fields[$numeric . '_range'] = array(
 			'id' => $numeric . '_range',
 			'type' => 'text',
