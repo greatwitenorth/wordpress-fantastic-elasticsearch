@@ -38,17 +38,7 @@ class Searcher{
 			if($search){
 				$score = Api::score('field', $field);
 
-				if($field == 'post_date'){
-					$shoulds[] = array('range' => array($field => array(
-							'boost' => 15,
-							'gte' => date('Y-m-d H:m:s')
-					)));
-
-					$shoulds[] = array('range' => array($field => array(
-							'boost' => 5,
-							'lte' => date('Y-m-d H:m:s', strtotime("-7 days"))
-					)));
-				}else if($score > 0){
+				if($score > 0 && $field != 'post_date'){
 					$shoulds[] = array('text' => array($field => array(
 						'query' => $search,
 						'boost' => $score
@@ -96,15 +86,17 @@ class Searcher{
 		
 		$args = \apply_filters('es_query_args', $args);
 
-		foreach(array_keys($numeric) as $facet){
-			$ranges = Api::ranges($facet);
+		if($numeric){
+			foreach(array_keys($numeric) as $facet){
+				$ranges = Api::ranges($facet);
 
-			if(count($ranges) > 0 ){
-				$args['facets'][$facet]['range'][$facet] = array_values($ranges);
-				
-				if(count($filters) > 0){
-					foreach($filters as $filter){
-						$args['facets'][$facet]['facet_filter']['bool']['should'][] = $filter;
+				if(count($ranges) > 0 ){
+					$args['facets'][$facet]['range'][$facet] = array_values($ranges);
+					
+					if(count($filters) > 0){
+						foreach($filters as $filter){
+							$args['facets'][$facet]['facet_filter']['bool']['should'][] = $filter;
+						}
 					}
 				}
 			}
@@ -148,8 +140,10 @@ class Searcher{
 			foreach($facet['terms'] as $term){
 				$val['facets'][$name][$term['term']] = $term['count'];
 			}
-			foreach($facet['ranges'] as $range){
-				$val['facets'][$name][$range['from'] . '-' . $range['to']] = $range['count'];
+			if($facet['ranges']){
+				foreach($facet['ranges'] as $range){
+					$val['facets'][$name][$range['from'] . '-' . $range['to']] = $range['count'];
+				}
 			}
 		}
 
