@@ -15,7 +15,7 @@ class Search{
 	function do_search($wp_query){
 		$this->searched = false;
 
-		if(!$wp_query->is_main_query() || !is_search() || is_admin() || !Api::option('enable')){
+		if( !is_search() || !Api::option('enable')){
 			return;
 		}
 
