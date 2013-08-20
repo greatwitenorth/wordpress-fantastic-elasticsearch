@@ -102,7 +102,8 @@ class Indexer{
 
 					$mapping = new \Elastica_Type_Mapping($type);
 					$mapping->setProperties(array($field => array(
-						'type' => 'date'
+						'type' => 'date',
+                        'format' => 'YYYY-MM-dd HH:mm:ss'
 					)));
 
 					$mapping->send();
